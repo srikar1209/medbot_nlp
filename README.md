@@ -1,4 +1,4 @@
-# medbot_nlp
+
 Medical Symptom Analysis and Diagnosis:
 This project aims to develop a system for analyzing medical symptoms and providing potential disease diagnoses based on a given set of symptoms. The project utilizes natural language processing techniques, machine learning, and data analysis to process medical datasets and perform symptom-disease mapping.
 
