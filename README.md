@@ -29,19 +29,19 @@ import torch
 from datasets import load_dataset, concatenate_datasets
 from transformers import TrainingArguments
 from trl import SFTTrainer
-
+```
 
 # Load the dataset
-
+```
 dataset = load_dataset('lighteval/med_dialog', 'healthcaremagic')
 dataset = dataset.remove_columns(['tgt', 'id'])
-
+```
 # Generate prompt function
+```
 def generate_prompt(Instruction: str, user: str, system: str) -> str:
     return f"""
     Below is an instruction that describes a task, paired with an input that provides further context.
     Write a response that appropriately completes the request.
-
 
     ### Instruction -
     {Instruction}
@@ -51,10 +51,10 @@ def generate_prompt(Instruction: str, user: str, system: str) -> str:
 
     ### Your Response -
     {system}
-    """
+```
 
 # Parse conversation function
-
+```
 def parse_conversation_to_df(text):
     text = text['src']
     data = {'prompt': ""}
@@ -75,24 +75,28 @@ def parse_conversation_to_df(text):
         data["prompt"] = generate_prompt(Instruction=instruction, system=doctor_msg.strip(), user=patient_msg.strip())
     
     return data
-
+```
 # Combine datasets
+```
 combined_dataset = concatenate_datasets([dataset['train'], dataset['test'], dataset['validation']])
 dataset = combined_dataset.map(parse_conversation_to_df).remove_columns(['src']).with_format('pt')
-
+```
 # Model parameters
+```
 max_seq_length = 1024
 model_name = "unsloth/mistral-7b-v0.3-bnb-4bit"
-
+```
 # Load the model and tokenizer
+```
 model, tokenizer = FastLanguageModel.from_pretrained(
     model_name=model_name,
     max_seq_length=max_seq_length,
     dtype=None,
     load_in_4bit=True,
 )
-
+```
 # Apply LoRA
+```
 model1 = FastLanguageModel.get_peft_model(
     model,
     r=16,
@@ -107,8 +111,9 @@ model1 = FastLanguageModel.get_peft_model(
     use_rslora=False,
     loftq_config=None,
 )
-
+```
 # Define the trainer
+```
 trainer = SFTTrainer(
     model=model1,
     train_dataset=dataset,
@@ -131,13 +136,15 @@ trainer = SFTTrainer(
         seed=3407,
     ),
 )
-
+```
 # Train the model
+```
 trainer.train()
 model1.save_pretrained(model_name + "_lora_model1")
-
+```
 
 # Summarization function
+```
 def summarize(model, tokenizer, user: str):
     instruction = """You are an AI medical assistant to have caring,
                     thoughtful dialogues to understand people's symptoms and health concerns.
@@ -148,22 +155,27 @@ def summarize(model, tokenizer, user: str):
     with torch.inference_mode():
         outputs = model1.generate(**inputs, max_new_tokens=220)
     return tokenizer.decode(outputs[0][inputs_length:], skip_special_tokens=True)
-
+```
 # Sample user input
+```
 user_input = """I am active, healthy and strong, just turned 51, female, exercise class twice a week, pretty busy, no allergies or medications.
                 For the past two weeks my muscles and joints are achy and actually hurt. They feel stiff like I did a new exercise and then did not stretch.
                 Have a big red bump that I thought was a black fly bite, it is sore and hard on my shin like I bumped it.
                 Does not look like a tick bite. Any ideas why the aches?"""
-'''
+```
 
 # Get summary
+```
 summary = summarize(model=model1, tokenizer=tokenizer, user=user_input)
 print('After Fine tuning - ', summary)
-
+```
 # Another user input
+```
 user_input2 = """I wake up every morning for the past 90 days with watery eyes and runny nose, a cough and sore throat which sometimes lasts all day.
                  What is your best suggestion? I tried several OTC medications with little relief. What can I try to help me with my condition? Thank you."""
+```
 # Get another summary
+```
 summary2 = summarize(model=model1, tokenizer=tokenizer, user=user_input2)
 print('After Fine tuning - ', summary2)
 
