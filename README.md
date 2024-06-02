@@ -51,6 +51,7 @@ def generate_prompt(Instruction: str, user: str, system: str) -> str:
     """
 
 # Parse conversation function
+```
 def parse_conversation_to_df(text):
     text = text['src']
     data = {'prompt': ""}
@@ -71,7 +72,7 @@ def parse_conversation_to_df(text):
         data["prompt"] = generate_prompt(Instruction=instruction, system=doctor_msg.strip(), user=patient_msg.strip())
     
     return data
-
+```
 # Combine datasets
 combined_dataset = concatenate_datasets([dataset['train'], dataset['test'], dataset['validation']])
 dataset = combined_dataset.map(parse_conversation_to_df).remove_columns(['src']).with_format('pt')
